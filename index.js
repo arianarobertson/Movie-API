@@ -27,6 +27,18 @@ app.get('/movies', (req, res) => {
   res.json(topMovies);
 });
 
+// Express route for /movies/:title
+app.get('/movies/:title', (req, res) => {
+  const title = req.params.title;
+  const movie = topMovies.find(movie => movie.title === title);
+  
+  if (movie) {
+    res.json(movie);
+  } else {
+    res.status(404).send('Movie not found.');
+  }
+});
+
 // Express route for /
 app.get('/', (req, res) => {
   res.send('Welcome to My Movie App!');
