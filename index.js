@@ -19,6 +19,8 @@ const topMovies = [
   { title: 'Movie 8', genre: 'Crime' },
   { title: 'Movie 9', genre: 'Crime' },
   { title: 'Movie 10', genre: 'Comedy' },
+  { title: 'Movie 11', genre: 'Comedy' },
+
   // Add more movies as needed
 ];
 
