@@ -1,5 +1,84 @@
-Title: myFlix
+<!DOCTYPE html>
+<html>
+<head>
+    <title> myFlix </title>
+    <!-- Your HTML document content goes here -->
+    Goal: To build the server-side component of a “movies” web application. The web application will provide users with access to information about different movies, directors, and genres. 
+    What: Users will be able to sign up, update their personal information, and create a list of their favorite movies.
+</head>
+<body>
+    1. Return a list of ALL movies to the user:
 
-Goal: To build the server-side component of a “movies” web application. The web application will provide users with access to information about different movies, directors, and genres. 
+Endpoint URL: /movies
+Method: GET
+Query Parameters: None
+Request Body: None
+Description: This endpoint returns a list of all movies available in the application.
+Response: An array of movie objects, each containing properties like title, description, genre, director, imageURL, and featured status.
+2. Return data about a single movie by title to the user:
 
-What: Users will be able to sign up, update their personal information, and create a list of their favorite movies.
+Endpoint URL: /movies/:title
+Method: GET
+Query Parameters: None
+Request Body: None
+Description: This endpoint returns detailed information about a specific movie based on its title.
+Response: A single movie object, including properties like title, description, genre, director, imageURL, and featured status.
+3. Return data about a genre (description) by name/title:
+
+Endpoint URL: /genres/:name
+Method: GET
+Query Parameters: None
+Request Body: None
+Description: This endpoint provides information about a genre based on its name/title.
+Response: An object containing the description of the genre.
+4. Return data about a director (bio, birth year, death year) by name:
+
+Endpoint URL: /directors/:name
+Method: GET
+Query Parameters: None
+Request Body: None
+Description: This endpoint retrieves information about a director based on their name.
+Response: An object containing the director's biography, birth year, and death year (if applicable).
+5. Allow new users to register:
+
+Endpoint URL: /users
+Method: POST
+Query Parameters: None
+Request Body: User registration data, including fields like username, email, and password.
+Description: Users can register on the platform using this endpoint.
+Response: A success message or user object indicating successful registration.
+6. Allow users to update their user info (username):
+
+Endpoint URL: /users/:userId
+Method: PUT
+Query Parameters: None
+Request Body: Updated user data, such as a new username.
+Description: Users can update their profile information, including their username.
+Response: A success message or the updated user object.
+7. Allow users to add a movie to their list of favorites:
+
+Endpoint URL: /users/:userId/favorites
+Method: POST
+Query Parameters: None
+Request Body: Movie data to be added to the user's list of favorites, typically the movie ID.
+Description: Users can add a movie to their list of favorite movies.
+Response: A success message or the updated user object with the added movie in their favorites list.
+8. Allow users to remove a movie from their list of favorites:
+
+Endpoint URL: /users/:userId/favorites/:movieId
+Method: DELETE
+Query Parameters: None
+Request Body: None
+Description: Users can remove a movie from their list of favorite movies.
+Response: A success message or the updated user object with the removed movie from their favorites list.
+9. Allow existing users to deregister:
+
+Endpoint URL: /users/:userId
+Method: DELETE
+Query Parameters: None
+Request Body: None
+Description: Existing users can deregister or delete their accounts using this endpoint.
+Response: A success message indicating that the user's account has been removed.
+    <!-- Rest of your HTML document content goes here -->
+</body>
+</html>
