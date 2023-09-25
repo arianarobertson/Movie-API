@@ -1,47 +1,49 @@
-// Import necessary modules and set up Express app
 const express = require('express');
 const morgan = require('morgan');
+const bodyParser = require('body-parser');
 const app = express();
-const port = 8080; // Choose a suitable port number
+app.use(bodyParser.json());
+uuid = require('uuid');
+
+const port = 8080;
+
 
 // Middleware to log all requests
 app.use(morgan('dev'));
 
 // Sample data for movies, genres, directors, and users
-// Replace with your actual data or database integration
 const movies = [
   { title: 'Movie 1', genre: 'Action' },
   { title: 'Movie 2', genre: 'Comedy' },
-  // Add more movie objects as needed
-]; // Your movie data
+  { title: 'Movie 3', genre: 'Drama' },
+];
+
 const genres = [
   { name: 'Action', description: 'Movies filled with action sequences.' },
   { name: 'Comedy', description: 'Movies that make you laugh.' },
-  // Add more genre objects as needed
-]; // Your genre data
+  { name: 'Drama', description: 'Serious and emotional films.' },
+];
+
 const directors = [
   { name: 'Director 1', bio: 'Bio of Director 1', birthYear: 1980, deathYear: null },
   { name: 'Director 2', bio: 'Bio of Director 2', birthYear: 1975, deathYear: null },
-  // Add more director objects as needed
-]; // Your director data
-const users = [
-  { username: 'User1', email: 'user1@example.com', password: 'hashedPassword' },
-  { username: 'User2', email: 'user2@example.com', password: 'hashedPassword' },
-  // Add more user objects as needed
-]; // Your user data
+];
 
-// Express route for /movies
+const users = [
+  { userId: 1, username: 'User1', email: 'user1@example.com', password: 'password123', favorites: [] },
+  { userId: 2, username: 'User2', email: 'user2@example.com', password: 'password456', favorites: [] },
+];
+
+// Endpoint 1: Return a list of ALL movies to the user
 app.get('/movies', (req, res) => {
-  // Return a list of all movies
   res.json(movies);
 });
 
-// Express route for /movies/:title
+// Endpoint 2: Return data about a single movie by title to the user
 app.get('/movies/:title', (req, res) => {
-  // Return data about a single movie by title
   const title = req.params.title;
   const movie = movies.find(movie => movie.title === title);
-  
+
   if (movie) {
     res.json(movie);
   } else {
@@ -49,12 +51,11 @@ app.get('/movies/:title', (req, res) => {
   }
 });
 
-// Express route for /genres/:name
+// Endpoint 3: Return data about a genre (description) by name/title
 app.get('/genres/:name', (req, res) => {
-  // Return data about a genre by name
   const name = req.params.name;
   const genre = genres.find(genre => genre.name === name);
-  
+
   if (genre) {
     res.json({ description: genre.description });
   } else {
@@ -62,63 +63,94 @@ app.get('/genres/:name', (req, res) => {
   }
 });
 
-// Express route for /directors/:name
+// Endpoint 4: Return data about a director (bio, birth year, death year) by name
 app.get('/directors/:name', (req, res) => {
-  // Return data about a director by name
   const name = req.params.name;
   const director = directors.find(director => director.name === name);
-  
+
   if (director) {
-    res.json({ bio: director.bio, birthYear: director.birthYear, deathYear: director.deathYear });
+    res.json({
+      bio: director.bio,
+      birthYear: director.birthYear,
+      deathYear: director.deathYear,
+    });
   } else {
     res.status(404).send('Director not found.');
   }
 });
 
-// Express route for /users
+// Endpoint 5: Allow new users to register
 app.post('/users', (req, res) => {
-  // Handle user registration
-  // Add new user to the users array or your database
-  // Return a success message or user object
+  const newUser = req.body;
+  newUser.userId = users.length + 1;
+  users.push(newUser);
+  res.json({ message: 'User registered successfully', user: newUser });
 });
 
-// Express route for /users/:userId
+// Endpoint 6: Allow users to update their user info (username)
 app.put('/users/:userId', (req, res) => {
-  // Handle user profile update
-  // Update the user's information in the users array or your database
-  // Return a success message or updated user object
+  const userId = parseInt(req.params.userId);
+  const updatedUserData = req.body;
+  
+  const userIndex = users.findIndex(user => user.userId === userId);
+  
+  if (userIndex !== -1) {
+    users[userIndex].username = updatedUserData.username;
+    res.json({ message: 'User information updated successfully', user: users[userIndex] });
+  } else {
+    res.status(404).send('User not found.');
+  }
 });
 
-// Express route for /users/:userId/favorites
+// Endpoint 7: Allow users to add a movie to their list of favorites
 app.post('/users/:userId/favorites', (req, res) => {
-  // Handle adding a movie to user's favorites
-  // Update the user's favorites in the users array or your database
-  // Return a success message or updated user object
+  const userId = parseInt(req.params.userId);
+  const movieIdToAdd = req.body.movieId;
+  
+  const user = users.find(user => user.userId === userId);
+  
+  if (user) {
+    user.favorites.push(movieIdToAdd);
+    res.json({ message: 'Movie added to favorites successfully', user });
+  } else {
+    res.status(404).send('User not found.');
+  }
 });
 
-// Express route for /users/:userId/favorites/:movieId
+// Endpoint 8: Allow users to remove a movie from their list of favorites
 app.delete('/users/:userId/favorites/:movieId', (req, res) => {
-  // Handle removing a movie from user's favorites
-  // Update the user's favorites in the users array or your database
-  // Return a success message or updated user object
+  const userId = parseInt(req.params.userId);
+  const movieIdToRemove = req.params.movieId;
+  
+  const user = users.find(user => user.userId === userId);
+  
+  if (user) {
+    const index = user.favorites.indexOf(movieIdToRemove);
+    if (index !== -1) {
+      user.favorites.splice(index, 1);
+      res.json({ message: 'Movie removed from favorites successfully', user });
+    } else {
+      res.status(404).send('Movie not found in favorites.');
+    }
+  } else {
+    res.status(404).send('User not found.');
+  }
 });
-// Express route for /users/:userId
+
+// Endpoint 9: Allow existing users to deregister
 app.delete('/users/:userId', (req, res) => {
-  // Handle user deregistration
-  // Remove the user from the users array or your database
-  // Return a success message
+  const userId = parseInt(req.params.userId);
+  
+  const userIndex = users.findIndex(user => user.userId === userId);
+  
+  if (userIndex !== -1) {
+    const removedUser = users.splice(userIndex, 1)[0];
+    res.json({ message: 'User deregistered successfully', removedUser });
+  } else {
+    res.status(404).send('User not found.');
+  }
 });
 
-// Express static file serving
-app.use(express.static('public'));
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error('Application-level error:', err.stack);
-  res.status(500).send('Something went wrong!');
-});
-
-// Start the server
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });
