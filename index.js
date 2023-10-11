@@ -10,6 +10,7 @@ const port = 8080;
 
 // Middleware to log all requests
 app.use(morgan('dev'));
+app.use(express.static('public'))
 
 // Sample data for movies, genres, directors, and users
 const movies = [
