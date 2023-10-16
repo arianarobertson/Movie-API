@@ -1,8 +1,14 @@
+const mongoose = require('mongoose');
+const Models = require('./models.js');
+const Movies = Models.Movie;
+const Users = Models.User;
+mongoose.connect('mongodb://localhost:27017/cfDB', { useNewUrlParser: true, useUnifiedTopology: true });
 const express = require('express');
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const app = express();
 app.use(bodyParser.json());
+app.use(express.urlencoded({ extended: true }));
 uuid = require('uuid');
 
 const port = 8080;
@@ -37,119 +43,141 @@ const users = [
 
 // Endpoint 1: Return a list of ALL movies to the user
 app.get('/movies', (req, res) => {
-  res.json(movies);
+  Movies.find()
+    .then((movies) => {
+      res.status(200).json(movies);
+    })
+    .catch((error) => {
+      console.error(error);
+      res.status(500).send('Error retrieving movies.');
+    });
 });
 
 // Endpoint 2: Return data about a single movie by title to the user
 app.get('/movies/:title', (req, res) => {
-  const title = req.params.title;
-  const movie = movies.find(movie => movie.title === title);
+  const movieTitle = req.params.title;
 
-  if (movie) {
-    res.json(movie);
-  } else {
-    res.status(404).send('Movie not found.');
-  }
+  Movies.findOne({ Title: movieTitle })
+    .then((movie) => {
+      res.status(200).json(movie);
+    })
+    .catch((error) => {
+      console.error(error);
+      res.status(500).send('Error retrieving movie.');
+    });
 });
 
 // Endpoint 3: Return data about a genre (description) by name/title
 app.get('/genres/:name', (req, res) => {
-  const name = req.params.name;
-  const genre = genres.find(genre => genre.name === name);
+  const genreName = req.params.name;
 
-  if (genre) {
-    res.json({ description: genre.description });
-  } else {
-    res.status(404).send('Genre not found.');
-  }
+  Movies.findOne({ 'Genre.Name': genreName })
+    .then((genre) => {
+      res.status(200).json({ Description: genre.Genre.Description });
+    })
+    .catch((error) => {
+      console.error(error);
+      res.status(500).send('Error retrieving genre.');
+    });
 });
 
 // Endpoint 4: Return data about a director (bio, birth year, death year) by name
 app.get('/directors/:name', (req, res) => {
-  const name = req.params.name;
-  const director = directors.find(director => director.name === name);
+  const directorName = req.params.name;
 
-  if (director) {
-    res.json({
-      bio: director.bio,
-      birthYear: director.birthYear,
-      deathYear: director.deathYear,
+  Movies.findOne({ 'Director.Name': directorName })
+    .then((director) => {
+      res.status(200).json({
+        Bio: director.Director.Bio,
+        BirthYear: director.Director.BirthYear,
+        DeathYear: director.Director.DeathYear,
+      });
+    })
+    .catch((error) => {
+      console.error(error);
+      res.status(500).send('Error retrieving director.');
     });
-  } else {
-    res.status(404).send('Director not found.');
-  }
 });
 
 // Endpoint 5: Allow new users to register
 app.post('/users', (req, res) => {
-  const newUser = req.body;
-  newUser.userId = users.length + 1;
-  users.push(newUser);
-  res.json({ message: 'User registered successfully', user: newUser });
+  const userData = req.body;
+
+  Users.create(userData)
+    .then((user) => {
+      res.status(201).json(user);
+    })
+    .catch((error) => {
+      console.error(error);
+      res.status(500).send('Error registering user.');
+    });
 });
 
 // Endpoint 6: Allow users to update their user info (username)
 app.put('/users/:userId', (req, res) => {
-  const userId = parseInt(req.params.userId);
-  const updatedUserData = req.body;
-  
-  const userIndex = users.findIndex(user => user.userId === userId);
-  
-  if (userIndex !== -1) {
-    users[userIndex].username = updatedUserData.username;
-    res.json({ message: 'User information updated successfully', user: users[userIndex] });
-  } else {
-    res.status(404).send('User not found.');
-  }
+  const userId = req.params.userId;
+  const updatedData = req.body;
+
+  Users.findByIdAndUpdate(userId, updatedData, { new: true })
+    .then((user) => {
+      res.status(200).json(user);
+    })
+    .catch((error) => {
+      console.error(error);
+      res.status(500).send('Error updating user information.');
+    });
 });
 
 // Endpoint 7: Allow users to add a movie to their list of favorites
 app.post('/users/:userId/favorites', (req, res) => {
-  const userId = parseInt(req.params.userId);
-  const movieIdToAdd = req.body.movieId;
-  
-  const user = users.find(user => user.userId === userId);
-  
-  if (user) {
-    user.favorites.push(movieIdToAdd);
-    res.json({ message: 'Movie added to favorites successfully', user });
-  } else {
-    res.status(404).send('User not found.');
-  }
+  const userId = req.params.userId;
+  const movieId = req.body.movieId;
+
+  Users.findByIdAndUpdate(
+    userId,
+    { $push: { FavoriteMovies: movieId } },
+    { new: true }
+  )
+    .then((user) => {
+      res.status(200).json(user);
+    })
+    .catch((error) => {
+      console.error(error);
+      res.status(500).send('Error adding a movie to favorites.');
+    });
 });
 
 // Endpoint 8: Allow users to remove a movie from their list of favorites
 app.delete('/users/:userId/favorites/:movieId', (req, res) => {
-  const userId = parseInt(req.params.userId);
-  const movieIdToRemove = req.params.movieId;
-  
-  const user = users.find(user => user.userId === userId);
-  
-  if (user) {
-    const index = user.favorites.indexOf(movieIdToRemove);
-    if (index !== -1) {
-      user.favorites.splice(index, 1);
-      res.json({ message: 'Movie removed from favorites successfully', user });
-    } else {
-      res.status(404).send('Movie not found in favorites.');
-    }
-  } else {
-    res.status(404).send('User not found.');
-  }
+  const userId = req.params.userId;
+  const movieId = req.params.movieId;
+
+  Users.findByIdAndUpdate(
+    userId,
+    { $pull: { FavoriteMovies: movieId } },
+    { new: true }
+  )
+    .then((user) => {
+      res.status(200).json(user);
+    })
+    .catch((error) => {
+      console.error(error);
+      res.status(500).send('Error removing a movie from favorites.');
+    });
 });
 
 // Endpoint 9: Allow existing users to deregister
 app.delete('/users/:userId', (req, res) => {
-  const userId = parseInt(req.params.userId);
-  
-  const userIndex = users.findIndex(user => user.userId === userId);
-  
-  if (userIndex !== -1) {
-    const removedUser = users.splice(userIndex, 1)[0];
-    res.json({ message: 'User deregistered successfully', removedUser });
-  } else {
-    res.status(404).send('User not found.');
-  }
+  const userId = req.params.userId;
+
+  Users.findByIdAndRemove(userId)
+    .then(() => {
+      res.status(200).send('User account removed successfully.');
+    })
+    .catch((error) => {
+      console.error(error);
+      res.status(500).send('Error removing user account.');
+    });
 });
 
 app.listen(port, () => {

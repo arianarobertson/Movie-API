@@ -56,9 +56,9 @@
                 <li><strong>Endpoint URL:</strong> /users</li>
                 <li><strong>Method:</strong> POST</li>
                 <li><strong>Query Parameters:</strong> None</li>
-                <li><strong>Request Body:</strong> User registration data, including fields like username, email, and password.</li>
+                <li><strong>Request Body:</strong> <code>{ "Username": String, "Password": String, "Email": String, "Birthday": Date }</code></li>
                 <li><strong>Description:</strong> Users can register on the platform using this endpoint.</li>
-                <li><strong>Response:</strong> A success message or user object indicating successful registration.</li>
+                <li><strong>Response:</strong> <code>{ "Username": String, "Password": String, "Email": String, "Birthday": Date }</code></li>
             </ul>
         
             <h2>6. Allow users to update their user info (username):</h2>
@@ -66,9 +66,9 @@
                 <li><strong>Endpoint URL:</strong> /users/:userId</li>
                 <li><strong>Method:</strong> PUT</li>
                 <li><strong>Query Parameters:</strong> None</li>
-                <li><strong>Request Body:</strong> Updated user data, such as a new username.</li>
+                <li><strong>Request Body:</strong> <code>{ "Username": String, "Password": String, "Email": String, "Birthday": Date }</code></li>
                 <li><strong>Description:</strong> Users can update their profile information, including their username.</li>
-                <li><strong>Response:</strong> A success message or the updated user object.</li>
+                <li><strong>Response:</strong> <code>{ "Username": String, "Password": String, "Email": String, "Birthday": Date, "FavoriteMovies": [String] }</code></li>
             </ul>
         
             <h2>7. Allow users to add a movie to their list of favorites:</h2>
