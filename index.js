@@ -29,29 +29,6 @@ uuid = require('uuid');
 
 const port = 8080;
 
-// Sample data for movies, genres, directors, and users
-const movies = [
-  { title: 'Movie 1', genre: 'Action' },
-  { title: 'Movie 2', genre: 'Comedy' },
-  { title: 'Movie 3', genre: 'Drama' },
-];
-
-const genres = [
-  { name: 'Action', description: 'Movies filled with action sequences.' },
-  { name: 'Comedy', description: 'Movies that make you laugh.' },
-  { name: 'Drama', description: 'Serious and emotional films.' },
-];
-
-const directors = [
-  { name: 'Director 1', bio: 'Bio of Director 1', birthYear: 1980, deathYear: null },
-  { name: 'Director 2', bio: 'Bio of Director 2', birthYear: 1975, deathYear: null },
-];
-
-const users = [
-  { userId: 1, username: 'User1', email: 'user1@example.com', password: 'password123', favorites: [] },
-  { userId: 2, username: 'User2', email: 'user2@example.com', password: 'password456', favorites: [] },
-];
-
 // Endpoint 1: Return a list of ALL movies to the user
 app.get('/movies', passport.authenticate('jwt', { session: false }), async (req, res) => {
   await Movies.find()
@@ -133,9 +110,10 @@ app.post(
           if (user) {
               return res.status(400).send(req.body.Username + ' already exists');
           } else {
+            let hashedPassword = Users.hashPassword(req.body.Password);
               Users.create({
                   Username: req.body.Username,
-                  Password: req.body.Password,
+                  Password: hashedPassword,
                   Email: req.body.Email,
                   Birthday: req.body.Birthday
               })
@@ -270,20 +248,3 @@ app.use((err, req, res, next) => {
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });
-
-// Sample data for top 10 movies
-const topMovies = [
-  { title: 'Movie 1', genre: 'Action' },
-  { title: 'Movie 2', genre: 'Comedy' },
-  { title: 'Movie 3', genre: 'Romance' },
-  { title: 'Movie 4', genre: 'Romantic Comedy' },
-  { title: 'Movie 5', genre: 'Drama' },
-  { title: 'Movie 6', genre: 'Crime' },
-  { title: 'Movie 7', genre: 'Crime' },
-  { title: 'Movie 8', genre: 'Crime' },
-  { title: 'Movie 9', genre: 'Crime' },
-  { title: 'Movie 10', genre: 'Comedy' },
-  { title: 'Movie 11', genre: 'Comedy' },
-
-  // Add more movies as needed
-];
