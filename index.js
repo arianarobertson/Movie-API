@@ -8,15 +8,26 @@ const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const app = express();
 app.use(bodyParser.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(bodyParser.urlencoded({ extended: true }));
+const cors = require('cors');
+let allowedOrigins = ['http://localhost:8080', 'http://testsite.com'];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if(!origin) return callback(null, true);
+    if(allowedOrigins.indexOf(origin) === -1){ // If a specific origin isn’t found on the list of allowed origins
+      let message = 'The CORS policy for this application doesn’t allow access from origin ' + origin;
+      return callback(new Error(message ), false);
+    }
+    return callback(null, true);
+  }
+}));
+let auth = require('./auth')(app);
+const passport = require('passport');
+require('./passport');
 uuid = require('uuid');
 
 const port = 8080;
-
-
-// Middleware to log all requests
-app.use(morgan('dev'));
-app.use(express.static('public'))
 
 // Sample data for movies, genres, directors, and users
 const movies = [
@@ -42,142 +53,218 @@ const users = [
 ];
 
 // Endpoint 1: Return a list of ALL movies to the user
-app.get('/movies', (req, res) => {
-  Movies.find()
+app.get('/movies', passport.authenticate('jwt', { session: false }), async (req, res) => {
+  await Movies.find()
     .then((movies) => {
-      res.status(200).json(movies);
+      res.status(201).json(movies);
     })
     .catch((error) => {
       console.error(error);
-      res.status(500).send('Error retrieving movies.');
+      res.status(500).send('Error: ' + error);
     });
 });
 
 // Endpoint 2: Return data about a single movie by title to the user
-app.get('/movies/:title', (req, res) => {
-  const movieTitle = req.params.title;
-
-  Movies.findOne({ Title: movieTitle })
-    .then((movie) => {
-      res.status(200).json(movie);
-    })
-    .catch((error) => {
-      console.error(error);
-      res.status(500).send('Error retrieving movie.');
-    });
-});
+app.get(
+  '/movies/:title',
+  passport.authenticate('jwt', {session: false}),
+  (req, res) => {
+      Movies.findOne({Title: req.params.title})
+      .then((movie) => {
+          res.status(200).json(movie);
+      })
+      .catch((err) => {
+          console.error(err);
+          res.status(500).send('Error: ' + err);
+      });
+  }
+);
 
 // Endpoint 3: Return data about a genre (description) by name/title
-app.get('/genres/:name', (req, res) => {
-  const genreName = req.params.name;
-
-  Movies.findOne({ 'Genre.Name': genreName })
-    .then((genre) => {
-      res.status(200).json({ Description: genre.Genre.Description });
-    })
-    .catch((error) => {
-      console.error(error);
-      res.status(500).send('Error retrieving genre.');
-    });
-});
+app.get(
+  '/movies/genres/:genre',
+  passport.authenticate('jwt', {session: false}),
+  (req, res) => {
+      Movies.findOne({'Genre.Name': req.params.genre})
+      .then((movie) => {
+          if (!movie) {
+              res.status(400).send(
+                  'There are no movies in the database with the genre - ' + req.params.genre
+              )
+          } else {
+              res.status(200).json(movie.Genre);
+          }
+      })
+      .catch((err) => {
+          console.error(err);
+          res.status(500).send('Error: ' + err);
+      });
+  }
+);
 
 // Endpoint 4: Return data about a director (bio, birth year, death year) by name
-app.get('/directors/:name', (req, res) => {
-  const directorName = req.params.name;
-
-  Movies.findOne({ 'Director.Name': directorName })
-    .then((director) => {
-      res.status(200).json({
-        Bio: director.Director.Bio,
-        BirthYear: director.Director.BirthYear,
-        DeathYear: director.Director.DeathYear,
+app.get(
+  '/movies/directors/:director',
+  passport.authenticate('jwt', {session: false}),
+  (req, res) => {
+      Movies.findOne({'Director.Name': req.params.director})
+      .then((movie) => {
+          if (!movie) {
+              res.status(400).send(
+                  'There are no movies in the database with the director - ' + req.params.director
+              )
+          } else {
+              res.status(200).json(movie.Director);
+          }
+      })
+      .catch((err) => {
+          console.error(err);
+          res.status(500).send('Error: ' + err);
       });
-    })
-    .catch((error) => {
-      console.error(error);
-      res.status(500).send('Error retrieving director.');
-    });
-});
+  }
+);
 
 // Endpoint 5: Allow new users to register
-app.post('/users', (req, res) => {
-  const userData = req.body;
+app.post(
+  '/users',
+  (req, res) => {
+      Users.findOne({Username: req.body.Username})
+      .then((user) => {
+          if (user) {
+              return res.status(400).send(req.body.Username + ' already exists');
+          } else {
+              Users.create({
+                  Username: req.body.Username,
+                  Password: req.body.Password,
+                  Email: req.body.Email,
+                  Birthday: req.body.Birthday
+              })
+              .then((user) => {res.status(201).json(user)})
+              .catch((err) => {
+                  console.error(err);
+                  res.status(500).send('Error: ' + err);
+              })
+          }
+      })
+      .catch((err) => {
+          console.error(err);
+          res.status(500).send('Error: ' + err);
+      });
+  }
+);
 
-  Users.create(userData)
-    .then((user) => {
-      res.status(201).json(user);
-    })
-    .catch((error) => {
-      console.error(error);
-      res.status(500).send('Error registering user.');
-    });
-});
+// Endpoint 6: Get user info
+app.get(
+  '/users/:username',
+  passport.authenticate('jwt', {session: false}),
+  (req, res) => {
+      Users.findOne({Username: req.params.username})
+      .then((user) => {
+          res.status(200).json(user);
+      })
+      .catch((err) => {
+          console.error(err);
+          res.status(500).send('Error: ' + err);
+      });
+  }
+);
 
 // Endpoint 6: Allow users to update their user info (username)
-app.put('/users/:userId', (req, res) => {
-  const userId = req.params.userId;
-  const updatedData = req.body;
-
-  Users.findByIdAndUpdate(userId, updatedData, { new: true })
-    .then((user) => {
-      res.status(200).json(user);
-    })
-    .catch((error) => {
-      console.error(error);
-      res.status(500).send('Error updating user information.');
-    });
-});
+app.put(
+  '/users/:username',
+  passport.authenticate('jwt', {session: false}),
+  (req, res) => {
+      Users.findOneAndUpdate({Username: req.params.username},
+          {$set:
+              {
+                  Username: req.body.Username,
+                  Password: req.body.Password,
+                  Email: req.body.Email,
+                  Birthday: req.body.Birthday
+              }
+          },
+          {new: true}
+      )
+      .then((updatedUser) => {
+          res.status(200).json(updatedUser);
+      })
+      .catch((err) => {
+          console.error(err);
+          res.status(500).send('Error: ' + err);
+      });
+  }
+);
 
 // Endpoint 7: Allow users to add a movie to their list of favorites
-app.post('/users/:userId/favorites', (req, res) => {
-  const userId = req.params.userId;
-  const movieId = req.body.movieId;
-
-  Users.findByIdAndUpdate(
-    userId,
-    { $push: { FavoriteMovies: movieId } },
-    { new: true }
-  )
-    .then((user) => {
-      res.status(200).json(user);
-    })
-    .catch((error) => {
-      console.error(error);
-      res.status(500).send('Error adding a movie to favorites.');
-    });
-});
+app.post(
+  '/users/:username/favorites/:movieId',
+  passport.authenticate('jwt', {session: false}),
+  (req, res) => {
+      Users.findOneAndUpdate(
+          {Username: req.params.username},
+          {
+              $push: {FavoriteMovies: req.params.movieId}
+          },
+          {new: true}
+      )
+      .then((updatedUser) => {
+          res.status(200).json(updatedUser);
+      })
+      .catch((err) => {
+          console.error(err);
+          res.status(500).send('Error: ' + err);
+      });
+  }
+);
 
 // Endpoint 8: Allow users to remove a movie from their list of favorites
-app.delete('/users/:userId/favorites/:movieId', (req, res) => {
-  const userId = req.params.userId;
-  const movieId = req.params.movieId;
-
-  Users.findByIdAndUpdate(
-    userId,
-    { $pull: { FavoriteMovies: movieId } },
-    { new: true }
-  )
-    .then((user) => {
-      res.status(200).json(user);
-    })
-    .catch((error) => {
-      console.error(error);
-      res.status(500).send('Error removing a movie from favorites.');
-    });
-});
+app.delete(
+  '/users/:username/favorites/:movieId',
+  passport.authenticate('jwt', {session: false}),
+  (req, res) => {
+      Users.findOneAndUpdate(
+          {Username: req.params.username},
+          {
+              $pull: {FavoriteMovies: req.params.movieId}
+          },
+          {new: true}
+      )
+      .then((updatedUser) => {
+          res.status(200).json(updatedUser);
+      })
+      .catch((err) => {
+          console.error(err);
+          res.status(500).send('Error: ' + err);
+      }); 
+  }
+);
 
 // Endpoint 9: Allow existing users to deregister
-app.delete('/users/:userId', (req, res) => {
-  const userId = req.params.userId;
+app.delete(
+  '/users/:username',
+  passport.authenticate('jwt', {session: false}),
+  (req, res) => {
+      Users.findOneAndRemove({Username: req.params.username})
+          .then((user) => {
+              if (!user) {
+                  res.status(400).send(req.params.username + ' was not found');
+              } else {
+                  res.status(200).send(req.params.username + ' was deleted');
+              }
+              })
+          .catch((err) => {
+              console.error(err);
+              res.status(500).send('Error: ' + err);
+          });
+  }
+);
 
-  Users.findByIdAndRemove(userId)
-    .then(() => {
-      res.status(200).send('User account removed successfully.');
-    })
-    .catch((error) => {
-      console.error(error);
-      res.status(500).send('Error removing user account.');
-    });
+app.use(express.static('public'));
+
+// General error handling
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send('Bummer!');
 });
 
 app.listen(port, () => {
