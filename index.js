@@ -30,9 +30,6 @@ uuid = require('uuid');
 const { check, validationResult } = require('express-validator');
 
 const port = process.env.PORT || 8080;
-app.listen(port, '0.0.0.0',() => {
- console.log('Listening on Port ' + port);
-});
 
 // Endpoint 1: Return a list of ALL movies to the user
 app.get('/movies', passport.authenticate('jwt', { session: false }), async (req, res) => {
