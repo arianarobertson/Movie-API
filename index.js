@@ -265,6 +265,10 @@ app.use((err, req, res, next) => {
   res.status(500).send('Bummer!');
 });
 
+app.get('/', (req, res) => { 
+  res.status(200).send('Movie API Backend!');
+    });
+
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });
