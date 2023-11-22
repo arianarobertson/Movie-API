@@ -46,7 +46,6 @@ app.get('/movies', async (req, res) => {
 // Endpoint 2: Return data about a single movie by title to the user
 app.get(
   '/movies/:title',
-  passport.authenticate('jwt', { session: false }),
   (req, res) => {
     Movies.findOne({ Title: req.params.title })
       .then((movie) => {
@@ -62,7 +61,6 @@ app.get(
 // Endpoint 3: Return data about a genre (description) by name/title
 app.get(
   '/movies/genres/:genre',
-  passport.authenticate('jwt', { session: false }),
   (req, res) => {
     Movies.findOne({ 'Genre.Name': req.params.genre })
       .then((movie) => {
@@ -84,7 +82,6 @@ app.get(
 // Endpoint 4: Return data about a director (bio, birth year, death year) by name
 app.get(
   '/movies/directors/:director',
-  passport.authenticate('jwt', { session: false }),
   (req, res) => {
     Movies.findOne({ 'Director.Name': req.params.director })
       .then((movie) => {
