@@ -32,7 +32,7 @@ const { check, validationResult } = require('express-validator');
 const port = process.env.PORT || 8080;
 
 // Endpoint 1: Return a list of ALL movies to the user
-app.get('/movies', async (req, res) => {
+app.get('/movies', passport.authenticate('jwt', { session: false }), async (req, res) => {
   await Movies.find()
     .then((movies) => {
       res.status(201).json(movies);
@@ -45,7 +45,7 @@ app.get('/movies', async (req, res) => {
 
 // Endpoint 2: Return data about a single movie by title to the user
 app.get(
-  '/movies/:title',
+  '/movies/:title', passport.authenticate('jwt', { session: false }),
   (req, res) => {
     Movies.findOne({ Title: req.params.title })
       .then((movie) => {
@@ -60,7 +60,7 @@ app.get(
 
 // Endpoint 3: Return data about a genre (description) by name/title
 app.get(
-  '/movies/genres/:genre',
+  '/movies/genres/:genre', passport.authenticate('jwt', { session: false }),
   (req, res) => {
     Movies.findOne({ 'Genre.Name': req.params.genre })
       .then((movie) => {
@@ -81,7 +81,7 @@ app.get(
 
 // Endpoint 4: Return data about a director (bio, birth year, death year) by name
 app.get(
-  '/movies/directors/:director',
+  '/movies/directors/:director', passport.authenticate('jwt', { session: false }),
   (req, res) => {
     Movies.findOne({ 'Director.Name': req.params.director })
       .then((movie) => {
